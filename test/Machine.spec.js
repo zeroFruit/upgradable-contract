@@ -13,7 +13,7 @@ const StorageFactory = artifacts.require('Storage');
 const CalculatorFactory = artifacts.require('Calculator');
 const MachineFactory = artifacts.require('Machine');
 
-contract('Storage', accounts => {
+contract('Machine', accounts => {
   const [owner, ...others] = accounts;
 
   describe('#constructor()', () => {
@@ -40,12 +40,12 @@ contract('Storage', accounts => {
       });
     });
 
-    describe('#delegateCallAddValues()', () => {
+    describe('#addValuesWithDelegateCall()', () => {
       let Calculator;
       beforeEach(async () => {
         Calculator = await CalculatorFactory.new();
       });
-      it.only('should successfully add values with delegate call', async () => {
+      it('should successfully add values with delegate call', async () => {
         const result = await Machine.addValuesWithDelegateCall(Calculator.address, new BN('1'), new BN('2'));
 
         expectEvent.inLogs(result.logs, 'AddedValuesByDelegateCall', {
@@ -67,5 +67,32 @@ contract('Storage', accounts => {
 
       });
     });
-  })
+
+    describe('#addValuesWithCall()', () => {
+      let Calculator;
+      beforeEach(async () => {
+        Calculator = await CalculatorFactory.new();
+      });
+      it('should successfully add values with call', async () => {
+        const result = await Machine.addValuesWithCall(Calculator.address, new BN('1'), new BN('2'));
+
+        expectEvent.inLogs(result.logs, 'AddedValuesByCall', {
+          a: new BN('1'),
+          b: new BN('2'),
+          success: true,
+        });
+
+        (result.receipt.from).should.be.equal(owner.toString().toLowerCase());
+        (result.receipt.to).should.be.equal(Machine.address.toString().toLowerCase());
+
+        // Calculator storage SHOULD CHANGE
+        (await Calculator.calculateResult()).should.be.bignumber.equal(new BN('3'));
+
+        (await Machine.calculateResult()).should.be.bignumber.equal(new BN('0'));
+
+        (await Machine.user()).should.be.equal(constants.ZERO_ADDRESS);
+        (await Calculator.user()).should.be.equal(Machine.address);
+      });
+    });
+  });
 });
