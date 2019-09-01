@@ -45,7 +45,7 @@ contract('Machine', accounts => {
       beforeEach(async () => {
         Calculator = await CalculatorFactory.new();
       });
-      it('should successfully add values with delegate call', async () => {
+      it.only('should successfully add values with delegate call', async () => {
         const result = await Machine.addValuesWithDelegateCall(Calculator.address, new BN('1'), new BN('2'));
 
         expectEvent.inLogs(result.logs, 'AddedValuesByDelegateCall', {
